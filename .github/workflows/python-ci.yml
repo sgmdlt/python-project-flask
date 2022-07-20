@@ -18,11 +18,9 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
-        # make depends on poetry
-      - name: Install dependencies
-        run: |
-          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
-          make install
+      - name: Install poetry
+        run: curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+      - name: Install deps make install
+        run: make install
       - name: Run linter
-        run: |
-          make lint
+        run: make lint
