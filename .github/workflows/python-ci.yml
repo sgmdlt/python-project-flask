@@ -21,7 +21,7 @@ jobs:
         # make depends on poetry
       - name: Install dependencies
         run: |
-          pip install poetry
+          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
           make install
       - name: Run linter
         run: |
