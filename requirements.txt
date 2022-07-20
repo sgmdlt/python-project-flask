@@ -59,7 +59,8 @@ markupsafe==2.1.1 ; python_version >= "3.10" and python_version < "4.0" \
 python-dotenv==0.20.0 ; python_version >= "3.10" and python_version < "4.0" \
     --hash=sha256:b7e3b04a59693c42c36f9ab1cc2acc46fa5df8c78e178fc33a8d4cd05c8d498f \
     --hash=sha256:d92a187be61fe482e4fd675b6d52200e7be63a12b724abbf931a40ce4fa92938
-setuptools==63.2.0 ; python_version >= "3.10" and python_version < "4.0"
+setuptools==63.2.0 ; python_version >= "3.10" and python_version < "4.0" \
+    --hash=sha256:0d33c374d41c7863419fc8f6c10bfe25b7b498aa34164d135c622e52580c6b16
 werkzeug==2.1.2 ; python_version >= "3.10" and python_version < "4.0" \
     --hash=sha256:1ce08e8093ed67d638d63879fd1ba3735817f7a80de3674d293f5984f25fb6e6 \
     --hash=sha256:72a4b735692dd3135217911cbeaa1be5fa3f62bffb8745c5215420a03dc55255
