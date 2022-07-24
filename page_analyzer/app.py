@@ -1,6 +1,6 @@
 import os
 from flask import Flask, flash, render_template, request, redirect, url_for
-from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, DateTime
+from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, DateTime  # noqa: E501
 
 
 app = Flask(__name__)
@@ -12,7 +12,7 @@ db = {
     'port': os.getenv('DB_PORT'),
     'database_name': os.getenv('DB_NAME'),
 }
-db_ulr = 'postgresql://{username}:{password}@{host}:{port}/{database_name}'.format(**db)
+db_ulr = 'postgresql://{username}:{password}@{host}:{port}/{database_name}'.format(**db)  # noqa: E501
 
 
 engine = create_engine(db_ulr)
