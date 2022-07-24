@@ -1,0 +1,13 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<h1> Анализатор страниц </h1>
+<p class="lead">Бесплатно проверяйте сайты на SEO пригодность</p>
+<form method="post">
+    <br>
+    <input type="text" name="url" placeholder="https://www.example.com" value="{{ request.form['url'] }}"></input>
+    <br>
+
+    <button type="submit">Проверить</button>
+</form>
+{% endblock %}
