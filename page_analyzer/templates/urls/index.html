@@ -1,0 +1,9 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<ul>
+    {% for url in urls %}
+    <li> {{ url }}</li>
+    {% endfor %}
+</ul>    
+{% endblock %}

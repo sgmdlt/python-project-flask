@@ -1,7 +1,7 @@
+from datetime import datetime
 import os
 from flask import Flask, flash, render_template, request, redirect, url_for
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, DateTime  # noqa: E501
-
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
@@ -12,19 +12,20 @@ db = {
     'port': os.getenv('DB_PORT'),
     'database_name': os.getenv('DB_NAME'),
 }
-db_ulr = 'postgresql://{username}:{password}@{host}:{port}/{database_name}'.format(**db)  # noqa: E501
-
+db_ulr = os.getenv(
+    'DATABASE_URL',
+    'postgresql://{username}:{password}@{host}:{port}/{database_name}'.format(**db),  # noqa: E501
+)
 
 engine = create_engine(db_ulr)
-metadata = MetaData(bind=engine)
-
-
+meta = MetaData(bind=engine)
 urls = Table(
-    'urls', metadata,
+    'urls', meta,
     Column('id', Integer, primary_key=True),
     Column('name', String(255), unique=True),
     Column('created_at', DateTime),
 )
+meta.create_all(engine)
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -37,10 +38,21 @@ def index():
         elif len(url) > 255:
             flash('Url is too long')
         else:
-            return redirect(url_for('urls'))
+            existed_url = engine.execute(
+                urls.select().where(urls.c.name == url)
+            ).first()
+            if existed_url:
+                flash('Url was already added')
+            else:
+                engine.execute(urls.insert().values(
+                    name=url,
+                    created_at=datetime.now()))
+            return redirect(url_for('get_urls'))
+
     return render_template('index.html')
 
 
 @app.route('/urls')
-def urls():
-    return 'urls'
+def get_urls():
+    url_list = engine.execute(urls.select())
+    return render_template('urls/index.html', urls=url_list)
