@@ -1,7 +1,10 @@
 from datetime import datetime
+from dotenv import load_dotenv
 import os
 from flask import Flask, flash, render_template, request, redirect, url_for
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, DateTime  # noqa: E501
+
+load_dotenv()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
@@ -9,15 +12,16 @@ db = {
     'username': os.getenv('DB_USERNAME'),
     'password': os.getenv('DB_PASSWORD'),
     'host': os.getenv('DB_HOST'),
-    'port': os.getenv('DB_PORT'),
     'database_name': os.getenv('DB_NAME'),
 }
 db_ulr = os.getenv(
     'DATABASE_URL',
-    'postgresql://{username}:{password}@{host}:{port}/{database_name}'.format(**db),  # noqa: E501
+    'postgresql+psycopg2://{username}:{password}@{host}/{database_name}'.format(**db),  # noqa: E501
 )
-
+print(db_ulr)
 engine = create_engine(db_ulr)
+
+
 meta = MetaData(bind=engine)
 urls = Table(
     'urls', meta,
