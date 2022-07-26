@@ -16,8 +16,8 @@ db = {
 }
 db_ulr = os.getenv(
     'DATABASE_URL',
-    'postgresql+psycopg2://{username}:{password}@{host}/{database_name}'.format(**db),  # noqa: E501
-)
+    'postgresql://{username}:{password}@{host}/{database_name}'.format(**db),  # noqa: E501
+).replace('postgres://', 'postgresql://')
 print(db_ulr)
 engine = create_engine(db_ulr)
 
