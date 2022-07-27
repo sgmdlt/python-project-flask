@@ -2,7 +2,12 @@ install:
 	poetry install
 
 lint:
-	poetry run flake8 page_analyzer/
+	poetry run flake8 .
+
+test:
+	poetry run pytest -vvvv
+
+check: test lint
 
 run:
 	poetry run python -m flask run
