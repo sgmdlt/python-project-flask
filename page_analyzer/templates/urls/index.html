@@ -3,7 +3,7 @@
 {% block content %}
 <ul>
     {% for url in urls %}
-    <li> {{ url }}</li>
+    <li>{{ url }}<a href="{{ url_for("get_url", id=url.id) }}">link</a></li>
     {% endfor %}
 </ul>    
 {% endblock %}

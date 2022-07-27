@@ -1,7 +1,7 @@
 from datetime import datetime
 from dotenv import load_dotenv
 import os
-from flask import Flask, flash, render_template, request, redirect, url_for
+from flask import Flask, abort, flash, render_template, request, redirect, url_for
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, DateTime  # noqa: E501
 
 load_dotenv()
@@ -18,18 +18,16 @@ db_ulr = os.getenv(
     'DATABASE_URL',
     'postgresql://{username}:{password}@{host}/{database_name}'.format(**db),  # noqa: E501
 ).replace('postgres://', 'postgresql://')
-print(db_ulr)
+
 engine = create_engine(db_ulr)
-
-
 meta = MetaData(bind=engine)
-urls = Table(
+urls_table = Table(
     'urls', meta,
     Column('id', Integer, primary_key=True),
     Column('name', String(255), unique=True),
     Column('created_at', DateTime),
 )
-meta.create_all(engine)
+meta.create_all()
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -42,21 +40,32 @@ def index():
         elif len(url) > 255:
             flash('Url is too long')
         else:
-            existed_url = engine.execute(
-                urls.select().where(urls.c.name == url)
-            ).first()
+            existed_url = urls_table.select().where(urls_table.c.name == url).execute().first()
             if existed_url:
                 flash('Url was already added')
             else:
-                engine.execute(urls.insert().values(
+                urls_table.insert().values(
                     name=url,
-                    created_at=datetime.now()))
-            return redirect(url_for('get_urls'))
+                    created_at=datetime.now()).execute()
+            return redirect(url_for('urls'))
 
     return render_template('index.html')
 
 
 @app.route('/urls')
-def get_urls():
-    url_list = engine.execute(urls.select())
+def urls():
+    url_list = urls_table.select().execute()
     return render_template('urls/index.html', urls=url_list)
+
+
+@app.route('/urls/<int:id>')
+def get_url(id):
+    url = urls_table.select().where(urls_table.c.id == id).execute().first()
+    if url is None:
+        abort(404)
+    return render_template('urls/url.html', url=url)
+
+
+@app.errorhandler(404)
+def page_not_found(error):
+    return render_template('errors/404.html'), 404
