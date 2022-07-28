@@ -2,7 +2,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 import os
 from flask import Flask, abort, flash, render_template, request, redirect, url_for
-from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, DateTime  # noqa: E501
+from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, DateTime
 
 load_dotenv()
 
@@ -14,20 +14,20 @@ db = {
     'host': os.getenv('DB_HOST'),
     'database_name': os.getenv('DB_NAME'),
 }
-db_ulr = os.getenv(
+app.config['DATABASE_URL'] = os.getenv(
     'DATABASE_URL',
     'postgresql://{username}:{password}@{host}/{database_name}'.format(**db),  # noqa: E501
 ).replace('postgres://', 'postgresql://')
 
-engine = create_engine(db_ulr)
-meta = MetaData(bind=engine)
+engine = create_engine(app.config['DATABASE_URL'])
+meta = MetaData()
 urls_table = Table(
     'urls', meta,
     Column('id', Integer, primary_key=True),
     Column('name', String(255), unique=True),
-    Column('created_at', DateTime),
+    Column('created_at', DateTime, default=datetime.now),
 )
-meta.create_all()
+meta.create_all(engine)
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -40,27 +40,31 @@ def index():
         elif len(url) > 255:
             flash('Url is too long')
         else:
-            existed_url = urls_table.select().where(urls_table.c.name == url).execute().first()
-            if existed_url:
-                flash('Url was already added')
-            else:
-                urls_table.insert().values(
-                    name=url,
-                    created_at=datetime.now()).execute()
-            return redirect(url_for('urls'))
+            with engine.begin() as connection:
+                existed_url = connection.execute(
+                    urls_table.select().where(urls_table.c.name == url)).first()
+                if existed_url:
+                    flash('Url was already added')
+                else:
+                    connection.execute(urls_table.insert().values(name=url))
+                    return redirect(url_for('urls'))
 
     return render_template('index.html')
 
 
 @app.route('/urls')
 def urls():
-    url_list = urls_table.select().execute()
+    with engine.begin() as connection:
+        url_list = connection.execute(urls_table.select())
     return render_template('urls/index.html', urls=url_list)
 
 
 @app.route('/urls/<int:id>')
 def get_url(id):
-    url = urls_table.select().where(urls_table.c.id == id).execute().first()
+    with engine.begin() as connection:
+        url = connection.execute(
+            urls_table.select().where(urls_table.c.id == id)
+        ).first()
     if url is None:
         abort(404)
     return render_template('urls/url.html', url=url)
