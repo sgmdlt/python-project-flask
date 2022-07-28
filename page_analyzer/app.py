@@ -1,8 +1,9 @@
 from datetime import datetime
 from dotenv import load_dotenv
 import os
-from flask import Flask, abort, flash, render_template, request, redirect, url_for
-from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, DateTime
+from flask import Flask, abort, flash, render_template
+from flask import request, redirect, url_for
+from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, DateTime  # noqa: E501
 
 load_dotenv()
 
