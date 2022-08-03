@@ -33,7 +33,6 @@ def client(app):
 def test_index(client):
     response = client.get('/')
     assert response.status_code == 200
-    assert '<form method="post">' in response.text
 
 
 def test_add_urls(client, data):
