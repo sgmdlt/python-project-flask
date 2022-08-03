@@ -4,6 +4,7 @@ import os
 from flask import Flask, abort, flash, render_template
 from flask import request, redirect, url_for
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, String, DateTime  # noqa: E501
+from urllib.parse import urlparse
 
 load_dotenv()
 
@@ -22,6 +23,8 @@ app.config['DATABASE_URL'] = os.getenv(
 
 engine = create_engine(app.config['DATABASE_URL'])
 meta = MetaData()
+
+
 urls_table = Table(
     'urls', meta,
     Column('id', Integer, primary_key=True),
@@ -31,24 +34,36 @@ urls_table = Table(
 meta.create_all(engine)
 
 
+def validate_url(url):
+    if not url:
+        return False
+    if len(url) > 255:
+        return False
+    o = urlparse(url)
+    if not (o.netloc and o.scheme):
+        return False
+    return True
+
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
         url = request.form['url']
 
-        if not url:
-            flash('Url is required!')
-        elif len(url) > 255:
-            flash('Url is too long')
-        else:
-            with engine.begin() as connection:
-                existed_url = connection.execute(
-                    urls_table.select().where(urls_table.c.name == url)).first()
-                if existed_url:
-                    flash('Url was already added')
-                else:
-                    connection.execute(urls_table.insert().values(name=url))
-                    return redirect(url_for('urls'))
+        if not validate_url(url):
+            flash('Некорректный URL', 'danger')
+            return redirect(url_for('index'))
+        
+        with engine.begin() as connection:
+            existed_url = connection.execute(
+                urls_table.select().where(urls_table.c.name == url)).first()
+            if existed_url:
+                id = existed_url.id
+                flash('Страница уже существует', 'info')
+            else:
+                new_url = connection.execute(urls_table.insert().values(name=url))
+                id = new_url.inserted_primary_key[0]
+            return redirect(url_for('get_url', id=id))
 
     return render_template('index.html')
 
