@@ -53,7 +53,7 @@ def index():
         if not validate_url(url):
             flash('Некорректный URL', 'danger')
             return redirect(url_for('index'))
-        
+
         with engine.begin() as connection:
             existed_url = connection.execute(
                 urls_table.select().where(urls_table.c.name == url)).first()
@@ -61,7 +61,8 @@ def index():
                 id = existed_url.id
                 flash('Страница уже существует', 'info')
             else:
-                new_url = connection.execute(urls_table.insert().values(name=url))
+                new_url = connection.execute(
+                    urls_table.insert().values(name=url))
                 id = new_url.inserted_primary_key[0]
             return redirect(url_for('get_url', id=id))
 
