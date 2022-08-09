@@ -1,5 +1,5 @@
 import pytest
-from page_analyzer.app import app as flask_app
+from page_analyzer.app import app as flask_app, urls_checks
 from page_analyzer.app import engine, urls_table, meta
 
 
@@ -72,3 +72,18 @@ def test_urls_view(client, data):
     assert 'http://example.com' in response.text
     assert 'http://site.com' in response.text
     assert 'http://hexlet.io' in response.text
+
+
+def test_url_checks(client, data):
+    client.post('/', data={'url': data[0]})
+    with engine.begin() as conn:
+        id = conn.execute(
+            urls_table.select().where(urls_table.c.name == data[0])
+        ).first().id
+    client.post(f'/urls/{id}/checks')
+    with engine.begin() as conn:
+        check = conn.execute(
+            urls_checks.select().where(urls_checks.c.url_id == id)
+        ).first()
+    response = client.get(f'urls/{id}')
+    assert f'<td>{check.id}</td>' in response.text
