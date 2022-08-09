@@ -1,0 +1,14 @@
+{% extends url.html %}
+
+{% block checks %}
+{% for check in checks %}
+    <tr>
+    <td>{{ check.id }}</td>
+    <td>Код ответа</td>
+    <td>h1</td>
+    <td>title</td>
+    <td>description</td>
+    <td>{{ check.created_at }}</td>
+    </tr>
+{% endfor %}
+{% endblock %}
