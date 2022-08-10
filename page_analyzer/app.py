@@ -8,6 +8,7 @@ from flask import Flask, abort, flash, render_template
 from flask import request, redirect, url_for
 from sqlalchemy import create_engine, desc, MetaData, Table, Column, Integer, String, DateTime, ForeignKey  # noqa: E501
 from urllib.parse import urlparse
+from bs4 import BeautifulSoup
 
 load_dotenv()
 
@@ -63,6 +64,20 @@ def validate_url(url):
 def normalize(url):
     o = urlparse(url)
     return f'{o.scheme}://{o.netloc}'
+
+
+def parse_page(page):
+    soup = BeautifulSoup(page, 'html.parser')
+    title = soup.find('title').text
+    h1 = soup.find('h1').text
+    description = soup.find('meta', attrs={'name': 'description'})
+    if description:
+        description = description['content']
+    return {
+        'title': title,
+        'h1': h1,
+        'description': description,
+    }
 
 
 @app.template_filter()
@@ -141,14 +156,23 @@ def url_checks(id):
         url = connection.execute(
             urls_table.select().
             where(urls_table.c.id == id)).first()
-        response = requests.get(url.name)
+        try:
+            response = requests.get(url.name)
+        except requests.ConnectionError:
+            flash('Не удалось получить данные', 'danger')
+            return redirect(url_for('get_url', id=id))
 
+        page = response.text
+        parsed_page = parse_page(page)
         connection.execute(
             urls_checks.insert().values(
                 url_id=id,
                 status_code=response.status_code,
-                h1=response.headers.get('h1'),
-                title=response.headers.get('title'),
-                created_at=datetime.now(),
-            ))
-    return redirect(url_for('get_url', id=id))
+                h1=parsed_page['h1'],
+                title=parsed_page['title'],
+                description=parsed_page['description'],
+            )
+        )
+        flash('Страница успешно проверена', 'info')
+
+        return redirect(url_for('get_url', id=id))

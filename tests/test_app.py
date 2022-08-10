@@ -74,9 +74,21 @@ def test_urls_view(client, data):
     assert 'http://hexlet.io' in response.text
 
 
+PAGE_CONTENT = '''
+<html>
+    <head>
+        <meta name="description" content="Super courses here!">
+        <title>Hexlet</title>
+    </head>
+    <body>
+        <h1>Hexlet Courses</h1>
+    </body>
+</html>'''
+
+
 def test_url_checks(client, data, requests_mock):
     url = data[0]
-    requests_mock.get(url, status_code=404)
+    requests_mock.get(url, status_code=205, text=PAGE_CONTENT)
     client.post('/', data={'url': url})
     with engine.begin() as conn:
         id = conn.execute(
@@ -87,4 +99,8 @@ def test_url_checks(client, data, requests_mock):
         check = conn.execute(
             urls_checks.select().where(urls_checks.c.url_id == id)
         ).first()
-    assert check.status_code == 404
+    print(check)
+    assert check.status_code == 205
+    assert check.title == 'Hexlet'
+    assert check.h1 == 'Hexlet Courses'
+    assert check.description == 'Super courses here!'
