@@ -74,16 +74,17 @@ def test_urls_view(client, data):
     assert 'http://hexlet.io' in response.text
 
 
-def test_url_checks(client, data):
-    client.post('/', data={'url': data[0]})
+def test_url_checks(client, data, requests_mock):
+    url = data[0]
+    requests_mock.get(url, status_code=404)
+    client.post('/', data={'url': url})
     with engine.begin() as conn:
         id = conn.execute(
-            urls_table.select().where(urls_table.c.name == data[0])
+            urls_table.select().where(urls_table.c.name == url)
         ).first().id
     client.post(f'/urls/{id}/checks')
     with engine.begin() as conn:
         check = conn.execute(
             urls_checks.select().where(urls_checks.c.url_id == id)
         ).first()
-    response = client.get(f'urls/{id}')
-    assert f'<td>{check.id}</td>' in response.text
+    assert check.status_code == 404
