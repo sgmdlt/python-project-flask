@@ -16,8 +16,13 @@
         <tr>
         <td>{{ url.id }}</td>
         <td><a href="{{ url_for("get_url", id=url.id) }}">{{ url.name }}</a></td>
+        {% if check %}
         <td>{{ check.status_code }}</td>
         <td>{{ check.created_at|format_datetime }}</td>
+        {% else %}
+        <td></td>
+        <td></td>
+        {% endif %}
         </tr>
         {% endfor %}
     </table>

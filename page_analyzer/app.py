@@ -1,5 +1,5 @@
 from datetime import datetime
-from tabnanny import check
+from itertools import zip_longest
 from time import strftime
 from dotenv import load_dotenv
 import os
@@ -108,7 +108,10 @@ def urls():
             order_by(desc('created_at'))
         )
 
-    return render_template('urls/index.html', urls = zip(url_list, checks))
+    return render_template(
+        'urls/index.html',
+        urls=zip_longest(url_list, checks),
+    )
 
 
 @app.route('/urls/<int:id>')
