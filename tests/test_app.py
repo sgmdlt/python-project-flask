@@ -1,10 +1,10 @@
 import pytest
-from page_analyzer.app import app as flask_app, urls_checks
-from page_analyzer.app import engine, urls_table, meta
-
+from page_analyzer import create_app
+from sqlalchemy import engine, MetaData
 
 @pytest.fixture(scope='session')
 def app():
+    flask_app = create_app()
     flask_app.config.update({
         'TESTING': True,
     })

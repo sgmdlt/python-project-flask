@@ -1,21 +1,24 @@
+from curses import echo
 from flask import Blueprint
 from bs4 import BeautifulSoup
 from flask import abort, flash, render_template
-from flask import request, redirect, url_for, current_app
+from flask import request, redirect, url_for
 from itertools import zip_longest
 import requests
 from urllib.parse import urlparse
-from sqlalchemy import desc, MetaData
+from sqlalchemy import create_engine, MetaData, desc
+import os
 
 
 bp = Blueprint('urls', __name__)
 
 
-engine = current_app.config['db']
-urls_table = current_app.config['urls']
-urls_checks = current_app.config['urls_checks']
-metadata_obj = MetaData(bind=engine)
-print(metadata_obj.tables)
+engine = create_engine(os.getenv('DATABASE_URL'), echo=True)
+meta = MetaData()
+meta.reflect(bind=engine)
+tables = meta.tables
+urls_table = tables['urls']
+urls_checks = tables['urls_checks']
 
 
 def validate_url(url):
@@ -68,7 +71,8 @@ def index():
 
             else:
                 new_url = connection.execute(
-                    urls_table.insert().values(name=normalized_url))
+                    urls_table.insert().values(
+                        name=normalized_url,))
                 print('Value inserted!')
 
                 url_id = new_url.inserted_primary_key[0]
@@ -80,13 +84,15 @@ def index():
 @bp.route('/urls')
 def urls():
     with engine.begin() as conn:
-        url_list = conn.execute(urls_table.select().order_by('id'))
+        url_list = conn.execute(urls_table.select().order_by('id')).fetchall()
+        print('URL_LIST ====> ', url_list)
         checks = conn.execute(
             urls_checks.select().
             distinct('url_id').
             order_by('url_id').
             order_by(desc('created_at'))
-        )
+        ).fetchmany()
+        print('CHECKS ====> ', checks)
 
     return render_template(
         'urls/index.html',
@@ -100,6 +106,7 @@ def get_url(id):
         url = connection.execute(
             urls_table.select().
             where(urls_table.c.id == id)).first()
+        print('URL ==== ', url)
         if url is None:
             abort(404)
         checks = connection.execute(
