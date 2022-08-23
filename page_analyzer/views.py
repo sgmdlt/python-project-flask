@@ -5,10 +5,17 @@ from flask import request, redirect, url_for, current_app
 from itertools import zip_longest
 import requests
 from urllib.parse import urlparse
-from sqlalchemy import desc
+from sqlalchemy import desc, MetaData
 
 
 bp = Blueprint('urls', __name__)
+
+
+engine = current_app.config['db']
+urls_table = current_app.config['urls']
+urls_checks = current_app.config['urls_checks']
+metadata_obj = MetaData(bind=engine)
+print(metadata_obj.tables)
 
 
 def validate_url(url):
@@ -43,10 +50,6 @@ def parse_page(page):
 
 @bp.route('/', methods=['GET', 'POST'])
 def index():
-    engine = current_app.config['db']
-    print(id(engine))
-    urls_table = current_app.config['urls']
-
     if request.method == 'POST':
         url = request.form['url']
 
@@ -76,12 +79,6 @@ def index():
 
 @bp.route('/urls')
 def urls():
-    engine = current_app.config['db']
-    print(id(engine))
-    urls_table = current_app.config['urls']
-    print(urls_table.columns)
-    urls_checks = current_app.config['urls_checks']
-
     with engine.begin() as conn:
         url_list = conn.execute(urls_table.select().order_by('id'))
         checks = conn.execute(
@@ -99,11 +96,6 @@ def urls():
 
 @bp.route('/urls/<int:id>')
 def get_url(id):
-    engine = current_app.config['db']
-    urls_table = current_app.config['urls']
-    print(urls_table.columns)
-    urls_checks = current_app.config['urls_checks']
-
     with engine.begin() as connection:
         url = connection.execute(
             urls_table.select().
@@ -120,11 +112,6 @@ def get_url(id):
 
 @bp.route('/urls/<int:id>/checks', methods=['POST'])
 def url_checks(id):
-    engine = current_app.config['db']
-    print(id(engine))
-    urls_table = current_app.config['tables']['urls']
-    urls_checks = current_app.config['tables']['urls_checks']
-
     with engine.begin() as connection:
         url = connection.execute(
             urls_table.select().
