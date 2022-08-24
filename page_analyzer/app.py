@@ -1,6 +1,5 @@
 from time import strftime
 from flask import Flask, render_template
-from sqlalchemy import create_engine, MetaData
 
 
 def create_app():
@@ -15,14 +14,6 @@ def create_app():
     @app.errorhandler(404)
     def page_not_found(error):
         return render_template('errors/404.html'), 404
-
-    """ 
-    app.config['db'] = create_engine(app.config['DATABASE_URL'], echo=True)
-    engine = app.config['db']
-    meta = MetaData()
-    meta.reflect(bind=engine)
-    tables = meta.tables  # noqa: E501
-    print(tables) """
 
     from page_analyzer import views
     app.register_blueprint(views.bp)

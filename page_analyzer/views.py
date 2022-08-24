@@ -1,4 +1,3 @@
-from curses import echo
 from flask import Blueprint
 from bs4 import BeautifulSoup
 from flask import abort, flash, render_template
@@ -6,19 +5,11 @@ from flask import request, redirect, url_for
 from itertools import zip_longest
 import requests
 from urllib.parse import urlparse
-from sqlalchemy import create_engine, MetaData, desc
-import os
+from sqlalchemy import desc
+from page_analyzer.db import get_db, get_table
 
 
 bp = Blueprint('urls', __name__)
-
-
-engine = create_engine(os.getenv('DATABASE_URL'), echo=True)
-meta = MetaData()
-meta.reflect(bind=engine)
-tables = meta.tables
-urls_table = tables['urls']
-urls_checks = tables['urls_checks']
 
 
 def validate_url(url):
@@ -53,6 +44,8 @@ def parse_page(page):
 
 @bp.route('/', methods=['GET', 'POST'])
 def index():
+    engine = get_db()
+    urls_table = get_table('urls')
     if request.method == 'POST':
         url = request.form['url']
 
@@ -83,6 +76,9 @@ def index():
 
 @bp.route('/urls')
 def urls():
+    engine = get_db()
+    urls_table = get_table('urls')
+    urls_checks = get_table('urls_checks')
     with engine.begin() as conn:
         url_list = conn.execute(urls_table.select().order_by('id')).fetchall()
         print('URL_LIST ====> ', url_list)
@@ -102,6 +98,9 @@ def urls():
 
 @bp.route('/urls/<int:id>')
 def get_url(id):
+    engine = get_db()
+    urls_table = get_table('urls')
+    urls_checks = get_table('urls_checks')
     with engine.begin() as connection:
         url = connection.execute(
             urls_table.select().
@@ -119,6 +118,9 @@ def get_url(id):
 
 @bp.route('/urls/<int:id>/checks', methods=['POST'])
 def url_checks(id):
+    engine = get_db()
+    urls_table = get_table('urls')
+    urls_checks = get_table('urls_checks')
     with engine.begin() as connection:
         url = connection.execute(
             urls_table.select().
