@@ -1,28 +1,55 @@
+import os
 import pytest
+import sqlite3
+
+
+from datetime import datetime
 from page_analyzer import create_app
-from sqlalchemy import engine, MetaData
+
+
+DATABASE_URL = 'test_db'
+URL = {
+    'id': 12,
+    'name': 'http://example.com',
+    'created_at': datetime.now(),
+}
+
+URL_CHECK = {
+    'url_id': 12,
+    'status_code': 200,
+    'h1': 'Example.com best site ever!',
+    'title': 'Hello from example.com',
+    'description': 'Examples.com is your friend in testing',
+    'created_at': datetime.now(),
+}
+
+
+def prepare_db():
+    connection = sqlite3.connect(DATABASE_URL)
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(current_dir, 'schema.sql')) as f:
+        connection.executescript(f.read())
+    connection.commit()
+    connection.close()
+
+
+@pytest.fixture()
+def db():
+    connect = sqlite3.connect(DATABASE_URL)
+    yield connect
+    connect.rollback()
+
 
 @pytest.fixture(scope='session')
 def app():
+    prepare_db()
     flask_app = create_app()
     flask_app.config.update({
         'TESTING': True,
+        'DATABASE_URL': f'sqlite:///{DATABASE_URL}',
     })
 
-    meta.create_all(engine)
     yield flask_app
-
-
-@pytest.fixture
-def data():
-    urls = [
-        'http://example.com',
-        'http://site.com',
-        'http://hexlet.io',
-    ]
-    yield urls
-
-    engine.execute(urls_table.delete().where(urls_table.c.name.in_(urls)))
 
 
 @pytest.fixture(scope='session')
@@ -35,43 +62,11 @@ def test_index(client):
     assert response.status_code == 200
 
 
-def test_add_urls(client, data):
-    for url in data:
-        response = client.post('/', data={'url': url})
-        assert response.status_code == 302
-    with engine.begin() as conn:
-        url1 = conn.execute(
-            urls_table.select().where(urls_table.c.name == 'http://example.com')
-        ).first()
-        url2 = conn.execute(
-            urls_table.select().where(urls_table.c.name == 'http://site.com')
-        ).first()
-        url3 = conn.execute(
-            urls_table.select().where(urls_table.c.name == 'http://hexlet.io')
-        ).first()
-    assert url1.name == 'http://example.com'
-    assert url2.name == 'http://site.com'
-    assert url3.name == 'http://hexlet.io'
-
-
-def test_data_flushes():
-    with engine.begin() as conn:
-        data = conn.execute(
-            urls_table.select().where(urls_table.c.name == 'http://example.com')
-        ).first()
-        assert data is None
-
-
-def test_urls_view(client, data):
-    for url in data:
-        response = client.post('/', data={'url': url})
-        assert response.status_code == 302
+def test_urls(client, db):
+    client.post('/', data={'url': 'https://ru.code-basics.com'})
     response = client.get('/urls')
-    print(response.text)
     assert response.status_code == 200
-    assert 'http://example.com' in response.text
-    assert 'http://site.com' in response.text
-    assert 'http://hexlet.io' in response.text
+    assert 'https://ru.code-basics.com' in response.text
 
 
 PAGE_CONTENT = '''
@@ -86,21 +81,14 @@ PAGE_CONTENT = '''
 </html>'''
 
 
-def test_url_checks(client, data, requests_mock):
-    url = data[0]
+def test_url_checks(client, requests_mock, db):
+    url = 'https://ru.code-basics.com'
     requests_mock.get(url, status_code=205, text=PAGE_CONTENT)
     client.post('/', data={'url': url})
-    with engine.begin() as conn:
-        id = conn.execute(
-            urls_table.select().where(urls_table.c.name == url)
-        ).first().id
+    id = db.execute('SELECT id FROM urls WHERE name = ?', (url,)).fetchone()[0]
     client.post(f'/urls/{id}/checks')
-    with engine.begin() as conn:
-        check = conn.execute(
-            urls_checks.select().where(urls_checks.c.url_id == id)
-        ).first()
-    print(check)
-    assert check.status_code == 205
-    assert check.title == 'Hexlet'
-    assert check.h1 == 'Hexlet Courses'
-    assert check.description == 'Super courses here!'
+    response = client.get(f'urls/{id}')
+    assert response.status_code == 200
+    assert 'Super courses here!' in response.text
+    assert 'Hexlet' in response.text
+    assert 'Hexlet Courses' in response.text
