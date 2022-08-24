@@ -6,7 +6,7 @@ def get_db():
     db = getattr(g, '_database', None)
     if db is None:
         print('DATABASE_URL ===>', current_app.config['DATABASE_URL'])
-        db = g._database = create_engine(current_app.config['DATABASE_URL'], echo=True)
+        db = g._database = create_engine(current_app.config['DATABASE_URL'], echo=True)  # noqa: E501
     return db
 
 

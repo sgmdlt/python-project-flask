@@ -7,7 +7,6 @@ Create Date: 2022-08-23 19:30:07.469497
 """
 from alembic import op
 import sqlalchemy as sa
-from datetime import datetime
 
 # revision identifiers, used by Alembic.
 revision = '70e233556cb8'
@@ -25,7 +24,7 @@ def upgrade() -> None:
         sa.Column('h1', sa.String(255)),
         sa.Column('title', sa.String(255)),
         sa.Column('description', sa.String(255)),
-        sa.Column('created_at', sa.DateTime, server_default=sa.func.current_timestamp()),
+        sa.Column('created_at', sa.DateTime, server_default=sa.func.current_timestamp()),  # noqa: E501
     )
 
 
