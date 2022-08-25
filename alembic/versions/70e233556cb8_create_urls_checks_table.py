@@ -21,9 +21,9 @@ def upgrade() -> None:
         sa.Column('id', sa.Integer, primary_key=True),
         sa.Column('url_id', sa.Integer, sa.ForeignKey('urls.id', ondelete='CASCADE', onupdate='CASCADE')),  # noqa: E501
         sa.Column('status_code', sa.Integer),
-        sa.Column('h1', sa.String(255)),
-        sa.Column('title', sa.String(255)),
-        sa.Column('description', sa.String(255)),
+        sa.Column('h1', sa.Text),
+        sa.Column('title', sa.Text),
+        sa.Column('description', sa.Text),
         sa.Column('created_at', sa.DateTime, server_default=sa.func.current_timestamp()),  # noqa: E501
     )
 
