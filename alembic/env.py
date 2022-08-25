@@ -42,6 +42,8 @@ def run_migrations_offline() -> None:
 
     """
     url = os.getenv('DATABASE_URL')
+    if 'postgres' in url:
+        url = url.replace('postgres://', 'postgresql://', 1)
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -61,6 +63,8 @@ def run_migrations_online() -> None:
 
     """
     url = os.getenv('DATABASE_URL')
+    if 'postgres' in url:
+        url = url.replace('postgres://', 'postgresql://', 1)
     connectable = create_engine(url)
 
     with connectable.connect() as connection:
